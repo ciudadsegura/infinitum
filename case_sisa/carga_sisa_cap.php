@@ -217,7 +217,7 @@ while (true) {
 			if( ($file!=".") && ($file!="..") ){
 				//echo $file;
 
-				$division = strtoupper(preg_replace("/_/"," ",preg_replace("/.xls/","",(preg_replace("/QuejasPendientesCASE_/", "", $file)))));
+				$division = strtoupper(preg_replace("/_/"," ",preg_replace("/.xls/","",(preg_replace("/CAP_/", "", $file)))));
 
 				//echo $division."\n";
 
