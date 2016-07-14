@@ -1,3 +1,5 @@
+CREATE DATABASE  IF NOT EXISTS `infinitum` /*!40100 DEFAULT CHARACTER SET latin1 */;
+USE `infinitum`;
 -- MySQL dump 10.13  Distrib 5.7.13, for Linux (x86_64)
 --
 -- Host: 192.168.1.72    Database: infinitum
@@ -16,9 +18,25 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `perfiles`
+--
+
+DROP TABLE IF EXISTS `perfiles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `perfiles` (
+  `idperfiles` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(50) DEFAULT NULL,
+  `descripcion` varchar(500) DEFAULT NULL,
+  `estatus` int(11) DEFAULT NULL,
+  `fecha_registro` datetime DEFAULT NULL,
+  PRIMARY KEY (`idperfiles`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `sisa_cap`
 --
-CREATE DATABASE infinitum;
 
 DROP TABLE IF EXISTS `sisa_cap`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -212,8 +230,8 @@ CREATE TABLE `sisa_principal` (
   `f_h_liq_efa` datetime DEFAULT NULL,
   `dur_efa` double(12,2) DEFAULT NULL,
   `dura_rep` double(12,2) DEFAULT NULL,
-  `fecha_recepcion` datetime DEFAULT NULL,
-  `fecha_cierre` datetime DEFAULT NULL,
+  `fecha_insercion` datetime DEFAULT NULL,
+  `ultima_actualizacion` datetime DEFAULT NULL,
   PRIMARY KEY (`ems`),
   KEY `index2` (`est_ems`),
   KEY `index3` (`id`)
@@ -231,19 +249,17 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` TRIGGER `infinitum`.`sisa_principal_BEFORE_INSERT` 
 BEFORE INSERT ON `sisa_principal` FOR EACH ROW
 BEGIN
-	SELECT fecha_recepcion, fecha_cierre INTO @fecha_recepcion, @fecha_cierre FROM  sisa_principal where ems=new.ems;
-	if (isnull(@fecha_recepcion)) then
-		set new.fecha_recepcion=(select now());
-        
-	ELSE
-        set new.fecha_recepcion=@fecha_recepcion;
-    end if;
+	SELECT fecha_insercion, ultima_actualizacion 
+    INTO @fecha_insercion, @ultima_actualizacion 
+    FROM  sisa_principal where ems=new.ems;
     
-    if (new.est_ems like('LIQ') and isnull(@fecha_cierre)) then
-		set new.fecha_cierre=(select now());
+	if (isnull(@fecha_insercion)) then
+		set new.fecha_insercion=(select now());
+        set new.ultima_actualizacion=(select now());
 	ELSE
-        set new.fecha_cierre=@fecha_cierre;
-    end if; 
+        set new.fecha_insercion=@fecha_insercion;
+        set new.ultima_actualizacion=(select now());
+    end if;
     
     if not exists (select * from sisa_proceso where ems=new.ems) then
 		select folio_pisaplex into @folio_pisaplex 
@@ -260,9 +276,6 @@ BEGIN
 			telefono=new.id;
 		end if;
     end if;
-    
-     
-    
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -280,19 +293,17 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` TRIGGER `infinitum`.`sisa_principal_BEFORE_UPDATE` BEFORE update ON `sisa_principal` FOR EACH ROW
 BEGIN
-SELECT fecha_recepcion, fecha_cierre INTO @fecha_recepcion, @fecha_cierre FROM  sisa_principal where ems=new.ems;
-	if (isnull(@fecha_recepcion)) then
-		set new.fecha_recepcion=(select now());
-        
-	ELSE
-        set new.fecha_recepcion=@fecha_recepcion;
-    end if;
+ SELECT fecha_insercion, ultima_actualizacion 
+    INTO @fecha_insercion, @ultima_actualizacion 
+    FROM  sisa_principal where ems=new.ems;
     
-    if (new.est_ems like('LIQ') and isnull(@fecha_cierre)) then
-		set new.fecha_cierre=(select now());
+	if (isnull(@fecha_insercion)) then
+		set new.fecha_insercion=(select now());
+        set new.ultima_actualizacion=(select now());
 	ELSE
-        set new.fecha_cierre=@fecha_cierre;
-    end if; 
+        set new.fecha_insercion=@fecha_insercion;
+        set new.ultima_actualizacion=(select now());
+    end if;
     
     if not exists (select * from sisa_proceso where ems=new.ems) then
 		select folio_pisaplex into @folio_pisaplex 
@@ -309,9 +320,6 @@ SELECT fecha_recepcion, fecha_cierre INTO @fecha_recepcion, @fecha_cierre FROM  
 			telefono=new.id;
 		end if;
     end if;
-    
-     
-    
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -341,8 +349,7 @@ CREATE TABLE `sisa_proceso` (
 /*DROP TABLE IF EXISTS `tabloide`;*/
 /*!50001 DROP VIEW IF EXISTS `tabloide`*/;
 /*SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8;
-*/
+SET character_set_client = utf8;*/
 /*!50001 CREATE VIEW `tabloide` AS SELECT 
  1 AS `ems`,
  1 AS `est_ems`,
@@ -365,27 +372,29 @@ SET character_set_client = utf8;
  1 AS `estado`,
  1 AS `distrito`,
  1 AS `cable_par`,
- 1 AS `posicion_dg`*/;
+ 1 AS `posicion_dg`,
+ 1 AS `sisa_fecha`,
+ 1 AS `plex_fecha`*/;
 /*SET character_set_client = @saved_cs_client;*/
-
 --
--- Table structure for table `users`
+-- Table structure for table `usuarios`
 --
 
-DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `usuarios`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `users` (
-  `idusers` int(11) NOT NULL AUTO_INCREMENT,
-  `usuario` varchar(45) DEFAULT NULL,
-  `password` varchar(45) DEFAULT NULL,
-  `nombre` varchar(45) DEFAULT NULL,
-  `ap_paterno` varchar(45) DEFAULT NULL,
-  `ap_materno` varchar(45) DEFAULT NULL,
-  `correo` varchar(100) DEFAULT NULL,
-  `telefono` int(10) DEFAULT NULL,
-  `permisos` int(11) DEFAULT NULL,
-  PRIMARY KEY (`idusers`)
+CREATE TABLE `usuarios` (
+  `idusuarios` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(150) NOT NULL,
+  `usuario` varchar(45) NOT NULL,
+  `contrasena` varchar(45) NOT NULL,
+  `foto` varchar(250) DEFAULT NULL,
+  `estatus` int(11) NOT NULL,
+  `fecha_registro` datetime NOT NULL,
+  `telefono` varchar(45) DEFAULT NULL,
+  `perfiles_idperfiles` int(11) NOT NULL,
+  PRIMARY KEY (`idusuarios`,`perfiles_idperfiles`),
+  KEY `fk_usuarios_perfiles_idx1` (`perfiles_idperfiles`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -409,8 +418,8 @@ DROP VIEW IF EXISTS `tabloide`;
 /*!50001 SET character_set_results     = utf8 */;
 /*!50001 SET collation_connection      = utf8_general_ci */;
 CREATE ALGORITHM=UNDEFINED 
-DEFINER=`rec1`@`%` SQL SECURITY DEFINER 
-VIEW `tabloide` AS select `a`.`ems` AS `ems`,`a`.`est_ems` AS `est_ems`,`a`.`id` AS `id`,`b`.`cmant` AS `cmant`,`b`.`t_serv` AS `t_serv`,`b`.`empresa` AS `empresa`,`b`.`dir_pta_a` AS `dir_pta_a`,`b`.`tel_reporta` AS `tel_reporta`,`b`.`cel_reporta` AS `cel_reporta`,`b`.`email_reporta` AS `email_reporta`,`b`.`desc_f1` AS `desc_f1`,`b`.`desc_f2` AS `desc_f2`,`b`.`ctro_trabajo` AS `ctro_trabajo`,`c`.`division` AS `division`,`c`.`nombre_del_tecnico` AS `nombre_del_tecnico`,`c`.`folio_pisaplex` AS `folio_pisaplex`,`c`.`folio_pisa` AS `folio_pisa`,`c`.`fecha_llegada` AS `fecha_llegada`,`c`.`estado` AS `estado`,`c`.`distrito` AS `distrito`,`c`.`cable_par` AS `cable_par`,`c`.`posicion_dg` AS `posicion_dg` from (((`sisa_proceso` `aa` join `sisa_principal` `a` on((`aa`.`ems` = `a`.`ems`))) join `sisa_complemento` `b` on((`a`.`ems` = `b`.`ems`))) left join `sisa_cap` `c` on((`aa`.`folio_pisaplex` = `c`.`folio_pisaplex`))) ;
+DEFINER=`root`@`localhost` SQL SECURITY DEFINER 
+VIEW `tabloide` AS select `a`.`ems` AS `ems`,`a`.`est_ems` AS `est_ems`,`a`.`id` AS `id`,`b`.`cmant` AS `cmant`,`b`.`t_serv` AS `t_serv`,`b`.`empresa` AS `empresa`,`b`.`dir_pta_a` AS `dir_pta_a`,`b`.`tel_reporta` AS `tel_reporta`,`b`.`cel_reporta` AS `cel_reporta`,`b`.`email_reporta` AS `email_reporta`,`b`.`desc_f1` AS `desc_f1`,`b`.`desc_f2` AS `desc_f2`,`b`.`ctro_trabajo` AS `ctro_trabajo`,`c`.`division` AS `division`,`c`.`nombre_del_tecnico` AS `nombre_del_tecnico`,`c`.`folio_pisaplex` AS `folio_pisaplex`,`c`.`folio_pisa` AS `folio_pisa`,`c`.`fecha_llegada` AS `fecha_llegada`,`c`.`estado` AS `estado`,`c`.`distrito` AS `distrito`,`c`.`cable_par` AS `cable_par`,`c`.`posicion_dg` AS `posicion_dg`,`a`.`ultima_actualizacion` AS `sisa_fecha`,`c`.`ultima_actualizacion` AS `plex_fecha` from (((`sisa_proceso` `aa` join `sisa_principal` `a` on((`aa`.`ems` = `a`.`ems`))) join `sisa_complemento` `b` on((`a`.`ems` = `b`.`ems`))) left join `sisa_cap` `c` on((`aa`.`folio_pisaplex` = `c`.`folio_pisaplex`))) ;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -424,4 +433,19 @@ VIEW `tabloide` AS select `a`.`ems` AS `ems`,`a`.`est_ems` AS `est_ems`,`a`.`id`
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-07-14  9:55:05
+-- Dump completed on 2016-07-14 16:15:38
+LOCK TABLES `perfiles` WRITE;
+/*!40000 ALTER TABLE `perfiles` DISABLE KEYS */;
+INSERT INTO `perfiles` (`idperfiles`, `nombre`, `descripcion`, `estatus`, `fecha_registro`) VALUES (2,'leo','prueba',1,'2016-07-14 00:00:00');
+/*!40000 ALTER TABLE `perfiles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping data for table `usuarios`
+--
+
+LOCK TABLES `usuarios` WRITE;
+/*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
+INSERT INTO `usuarios` (`idusuarios`, `nombre`, `usuario`, `contrasena`, `foto`, `estatus`, `fecha_registro`, `telefono`, `perfiles_idperfiles`) VALUES (1,'leonel','leo','leo','',1,'2016-07-14 00:00:00','000',2);
+/*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
+UNLOCK TABLES;
